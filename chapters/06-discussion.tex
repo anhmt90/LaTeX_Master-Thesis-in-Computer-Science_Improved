@@ -1,0 +1,87 @@
+\chapter{Discussion}\label{chapter:discussion}
+
+In this chapter, we will briefly discuss the potential issues of the current system design and suggest possible solutions or mitigations for them. 
+
+
+
+\section{The Presence of Centralized Factors}
+
+With regard to the system architecture shown in Figure \ref{fig:sys_architecture}, the system has two centralized components, which are the ITSA database and the oracle node. In the following, we will present the effects of these two components to the system  separately and propose possible mitigations for them.
+
+\subsection{The centralization of the ITSA Database}
+
+Among these two centralized components presented above, the centralization of the ITSA database can be more serious due to the importance of token data it provides to the system. There are many negative scenarios that can happen to the ITSA and leads to significant consequences in the index fund. For examples, the ITSA database can be compromised, e.g., from external factors such as government, hackers or from internal factors such as mistakes from staff, then the token data that the system receives can also be compromised, therefore, the portfolio selection process execute on the oracle node based on the input from the ITSA database can select a bad token set leading to poor portfolio performance, which in turn, causes investment losses to the investors. Furthermore, the ITSA as an organization could be shut down, e.g., by the government or dismiss themselves in the future. Finally, as with the current design, the ITSA's API must be available during the portfolio update process, which makes this functionality of the index depends on the availability of the ITSA's servers, effectively limiting the advantage of a decentralized application.
+
+\subsubsection{Possible Mitigation}
+
+With the potential consequences from the centralization of the ITSA component to our system, it is necessary to have solution that eliminates the direct presence of the ITSA database in the system design and attempts to achieve maximum decentralization. To this end, we suggest to implement, at least as a proof-of-concept, an incentive mechanism to encourage investors or shareholders to provide correct ITSA token data into a pending on-chain storage, e.g., in the \texttt{Oracle} contract, then the uploaded data can be validated through voting by other shareholders. For example, shareholders will upload to the \texttt{Oracle} contract the data of component tokens they wish to be included into the portfolio in the next update, also with their ITC codes and ITINs. Then, other shareholders can validate the data uploaded by voting on the tokens that have valid data and are compliant with the portfolio's category or tokens that can possibly bring more profits in the future etc. At the end of the grace period, the top component tokens with the most votes will become the new portfolio in the index fund and the the shareholders that voted for the tokens that are now in the portfolio will be refunded for the transaction fees used for voting and uploading token data in form DFAM tokens. Since the smart contract also records the transaction fees of each shareholder participating in the voting, it also has the transaction fees of the shareholders voted for the "losing" tokens, and based on these fees, additional DFAM will be minted to the shareholders voting for the "winning" tokens, thereby, creating an incentive mechanism to encourage shareholders to act honestly.
+
+Note that in the voting mechanism, the votes should be proportional to the amount of DFAM tokens a shareholders is holding. As such, the more DFAM tokens a shareholder has the more power he/she has over the voting period. This approach to mitigate the centralization of the ITSA achieve the desirable full centralization, however, there are also some caveats. First, the voters should have access to the ITSA's token data during the voting period in order to validate the uploaded token information. Voters can achieve this either by connecting to the ITSA' API or storing the ITSA token data locally for such voting occasions. In the later case, whenever the data from ITSA database is compromised, shareholders (voters) can recognized immediately thanks to the ITSA's token data they stored personally. Another caveat with this approach is that, it is not certain that the "winning" tokens are compliant with the portfolio's category or with the ITSA format in general. This happens when the number of dishonest shareholders is the majority of the voters. 
+
+
+
+\subsection{The centralization of the Oracle node}
+
+In principle, there is no difference for the case the oracle node is compromised instead of the ITSA data, since data can be also compromised before being fed into the \texttt{Oracle} contract. However, if we apply the multisig mechanism and require the functions  with \texttt{onlyOwner} modifier in \texttt{Oracle} to be confirmed by multiple administrator accounts, then the problem can be somewhat mitigate.
+
+
+However, with the grace period in place for the public to inspect the update data, whenever the data is compromised, either from the ITSA or from the oracle node, shareholders can always redeem their investment before the update takes effect.
+
+Also, the transaction fees applied to the oracle administrator for updating and rebalancing the portfolio should also be taken into account in the future, e.g., by a fee mechanism or by applying a DAO to the governance of the application and the oracle infrastructure.
+
+
+
+\subsection{Uniswap Fees and Impermanent Loss}
+
+We also consider the 0.3\% Uniswap fees and impermanent loss caused by Uniswap the issues of the current design, since investor will automatically lose some amount of capital when they invest or redeem their capital. A suggestion to mitigate this issue is to change to another DEX without fees or build separate liquidity pools for the index fund.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%
+% \section{Core Smart Contracts}
+
+% According to the system requirements, our DeFi application is supposed to be backed by an index token and offers automated functionalities for investments in the index token. As such, we compose two smart contract that are the core of the system to support the financial services. The first core contract is a token smart contract representing the index token itself. This smart contract follows the ERC20 token standard \cite{???} and thereby, supporting all the required basic functions for the interactions with the token. As the tokens themselves are only the crypto-assets as means for investments, the second core smart contract is responsible for a set of functions that perform a wide range of operations on the index token with regard to transaction settlement and all the governance aspects. In principle, it is possible to encode both of these smart contracts into one, but there are two reasons for this separation. The first reason is for the decoupling between an asset of trading and the business logic of the dApp, thus, future updates and additions of the on-chain functionalities for the dApp will not affect the token contract. Secondly, since smart contracts cannot be bug-fixed and this application concerning a financial service, the core contracts cannot tolerate bugs, therefore, the complexity of every smart contract should be reduced as much as possible to prevent the potential of bugs in the code, thereby, the unexpected consequences.
+
+% The design and functionalities of each core smart contract along with their inner workings will be featured in the remaining of this section.

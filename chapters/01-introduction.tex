@@ -1,0 +1,64 @@
+% !TeX root = ../main.tex
+% Add the above to each chapter to make compiling the PDF easier in some editors.
+
+\chapter{Introduction}\label{chapter:introduction}
+% \todo{Write the introduction part in March, and the Background in April.}
+In this century, we have been witnessing how Blockchain Technology has greatly influenced the financial sector with the conception of Decentralized Finance (DeFi). This new area of finance utilizes peer-to-peer (P2P) networking to allow participants to own and transfer not only money, but also other kinds of digital assets without the need of a centralized authority such as a bank standing in-between to execute the transactions and maintain account data.
+The first DeFi application dates back to 2008 when the cryptocurrency Bitcoin was introduced and became an innovation for P2P electronic payment \cite{satoshi2008peer}, which allows a decentralized and independent approach of transferring digital assets as opposed to traditional online banking or credit cards. Since then, Bitcoin has evolved extensively in terms of network size and financial value with the market capitalization of the more than \$837 billions as of August 2021 \cite{bitinfocharts}. As such, the technological innovation of Bitcoin have gained tremendous attention from academy as well as from industry for the solution to democratizing the financial sector as well as for the inspection of further applications on decentralized networks.
+
+In order to enable decentralization while at the same time maintaining the reliability of a financial service, the Bitcoin cryptocurrency system is underpinned by the Blockchain technology, which is one of the forms of Distributed Ledger Technology (DLT). The application of this revolutionizing technology is not only to cryptocurrency, but also to more general purposes such as running business logic in a decentralized manner. For this purpose, the Ethereum blockchain, another prominent and influential blockchain system proposed in 2013 by Vitalik Buterin \cite{buterin2014next} with the concept of \textit{smart contract} that allows more extensive capabilities and provides a decentralized platform not only for transferring and exchanging digital assets, but also for executing Turing-complete code on a so-called distributed Ethereum Virtual Machine (EVM). As a result, smart contracts provide the ability to deploy crypto-tokens on top of the Ethereum blockchain alongside Ether (ETH), the native cryptocurrency of Ethereum. Thus, network participants have more flexibility to deploy their own crypto-assets without the need for founding independent blockchains for the purpose. At present, there are tremendously many tokens on the market for different purposes, most of which are Ethereum-based such as Tether, Dai, Compound, ChainLink to name a few.
+
+As of August 2021, there are about 444,573 token contracts complying with the ERC20 standard on the Ethereum Mainnet \cite{etherscantokentracker}. With the large amount of cryptographic tokens currently available and their fast growth, there arises the need for identification, classification and analysis of tokens, which is actually the motivation behind the International Token Standardization Association (ITSA) with the goal of developing a universal framework for the identification, classification, and analysis of cryptographic tokens \cite{itsadefinition}. One of the objectives of this thesis is to demonstrate the real-world adoption of the ITSA's token classification framework through a proof-of-concept implementation of a \textit{index token} that encompasses a subset of Ethereum-based tokens in the same predefined category based on ITSA's International Token Classification (ITC) framework. To this end, we also propose a system prototype of a decentralized index fund that manages a crypto-token portfolio represented by the index token as an instrument for the passive investments in the underlying component tokens of the portfolio.
+
+\section{Problem Statement}
+
+    Investing in individual crypto-tokens on the cryptocurrency market is typically not an ideal means for investors to achieve portfolio diversification and broad market exposure, which are typically the desirable methods to mitigate investment risks. Furthermore, active tracking of crypto-assets prices and trading for profits is not an appropriate investment strategy for all investors due to the fact that active asset management generally requires much time, effort and knowledge of the market. In the case of investment in crypto-assets, investors are supposed to additionally have decent understanding of technical concepts such as blockchain technology and cryptographic schemes in order to interact with the network and invest with confidence. This necessity effectively creates an entry barrier to the cryptocurrency market for new investors, especially the non-technical ones. 
+
+On conventional stock market, the issues described above also arise and they are typically mitigated with the concept of \textit{passive asset management}, in which investors participate in index funds with a certain portfolio of investment securities and rely on these funds to manage their investments in the portfolio in a passive manner. As for the cryptocurrency market, we also intend to implement a similar concept on the Ethereum blockchain with the use of an \textit{index token} acting as a portfolio comprising different component tokens with its index price being directly aggregated from the prices of the underlying tokens and thereby, achieving the desirable portfolio diversification and broad market exposure. Furthermore, we aim to support investments in only a predefined token category and therefore, we require that the index token should be constituted of only the tokens in that category. Due to the fact that myriad new tokens are deployed and introduced to Ethereum on the daily basis and the token landscape is still not universally standardized in terms of token information, the task of identifying the category of tokens is a non-trivial classification problem. Therefore, we rely on the International Token Classification framework of the ITSA to acquire the needed token classification information, based on which token categories can be identified and thus, component tokens matching the predefined portfolio's category can be selected during the periodic portfolio update process.
+
+
+As the index token itself is only a means of investment in the underlying token assets, an index fund is therefore also required to manage the life cycle of index tokens and facilitate their investments. Basic functionalities of an index fund such as governing investments in index tokens or curating portfolio through portfolio update and rebalancing should also be provided. Furthermore, the index fund should execute trading of investment funds in Ether (ETH) for component tokens on some decentralized exchange (DEX) in an automated manner. As such, our index fund can be considered as an autonomous system that is open for any interested party to invest in a certain portfolio of component tokens through a new index token without the need for an trusted intermediary party to manage investors' funds. With that being said, particular system components such as the external ITSA database for retrieving the required token metadata used in the curation process of the portfolio introduces certain centralization factor into the picture and thus, requiring some thoughtful mitigation.
+
+% the curation of portfolio metadata in such a decentralized environment require some thoughtful consensus mechanism among the shareholders of the index token to achieve full autonomy
+
+Both the concepts of index token and index fund will be realized through the use of smart contracts on the Ethereum blockchain with the assistance of certain off-chain components to provide token metadata from the ITSA for the purpose of periodic portfolio update. As such, the main goal of this thesis is to develop and implement a system prototype to prove the concept of passive asset management through an index crypto-token and a decentralized index fund. Thereby, we demonstrate the adoption of the ITC framework into a decentralized application (dApp) and investigate the potential drawbacks of the concept for its the realization on the Ethereum Mainnet in the future. Furthermore, the thesis also aims to contribute more relevant research to the area of applied blockchain research in general and Decentralized Finance in particular. The outcome of this thesis could be developed further upon to have a real-world DeFi system of index token for the cryptographic token market on the Ethereum Mainnet and consequently, provide token investors an alternative investment option by investing in index tokens instead of the individual ones.
+
+
+
+
+
+\section{Research Questions}
+
+Being a research on the realization of passive asset management within the context of DeFi, the core of this thesis lies in the investigation of the following two research questions:
+
+\begin{description}
+    \item[RQ1:] \textbf{How feasible is the realization of passive asset management with Blockchain Technology?}\\
+    This is the main research question of the thesis and the answer to this question should serve as the proof-of-concept for the idea of tokenization of passive asset management using Blockchain technology. The investigation of this research question necessitates a system prototype on the Ethereum blockchain. The question can also be more specifically expressed as:
+    \begin{enumerate}[(a)]
+        \item How should the index token be designed to encapsulate and represent other existing Ethereum-based tokens?
+        \item How can the decentralized index fund govern investments in the index token?
+        \item How can the portfolio on the blockchain be updated with the off-chain data from the ITSA database?
+    \end{enumerate}
+    
+    
+    \item[RQ2:] \textbf{How does the centralization of certain subsystems affect the security of the whole system?}\\
+    The classified token information from the ITSA database is necessitated for the curation of portfolio data but such a database also poses a centralized component in the system. Furthermore, fully decentralized applications are hard to achieve due to issues related to their governance and thus, centralized administration is preferred for this initial version of our dApp. As such, the RQ2 can be more precisely formulated as:
+    \begin{enumerate}[(a)]
+        \item To which extend does centralization of the ITSA database and the system governance impact the security of the dApp?
+        
+        \item What are the possible approaches to mitigating the effects of the centralization introduced by the ITSA database and the system governance?
+    \end{enumerate}
+    
+    
+    % As such, certain centralized components are introduced into the system to simplify the curation of portfolio data in this initial version of this decentralized index fund application. More precisely, this research question aims to inspect the potential security risks from the ITSA database and the centralized oracle for retrieving token information.
+    
+    % As the main goal of this thesis is to investigate the feasibility of passive asset management using Blockchain technology in the context of a prototype, 
+    % Thus, require a meticulous strategy
+\end{description}
+
+
+
+
+% A general remark regarding citations: citations in this thesis are highlighted in italics. The usage of quote marks is applied to emphasise certain terms or because they are used in cited sources. Important terms are highlighted with bold letters for easy discovery.
+
+

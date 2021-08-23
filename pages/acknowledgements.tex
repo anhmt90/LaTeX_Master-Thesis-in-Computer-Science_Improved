@@ -1,0 +1,29 @@
+\makeatletter
+\ifthenelse{\pdf@strcmp{\languagename}{english}=0}
+{\addcontentsline{toc}{chapter}{Acknowledgments}}
+{\addcontentsline{toc}{chapter}{Danksagungen}}
+\makeatother
+\thispagestyle{empty}
+
+\vspace*{20mm}
+
+\begin{center}
+\makeatletter
+\ifthenelse{\pdf@strcmp{\languagename}{english}=0}
+{\usekomafont{section} Acknowledgments}
+{\usekomafont{section} Danksagungen}
+\makeatother
+\end{center}
+
+\vspace{10mm}
+
+%TODO: Acknowledgments
+
+Foremost, I would like to express my sincere gratitude to Victor von Wachter for his continuous support of my Master's thesis through the weekly meetings and insightful comments. My sincere thanks also goes to Prof. Dr. Philipp Sandner for the trust he has placed in me for this opportunity to work on this interesting and important thesis topic. I would like express my gratitude to Prof. Dr. Isabell Welpe and Ulrich Gallersdörfer for their quick supports around the organization of the thesis. Further, I am grateful to Prof. Dr. Florian Matthes, who has offered the supervision for this thesis as well as for his constructive questions and comments during the thesis presentations. Last but not the least, I would like to send many thanks to the staff at the ITSA including Christian Viehof, Maximilian Bruckner and Miloud El Idrissi for their helpful support with the ITSA's API.
+
+
+
+
+
+
+\cleardoublepage{}

@@ -1,0 +1,170 @@
+\chapter{Evaluation}\label{chapter:evaluation}
+
+In this chapter, we present our evaluations with the testing of the functionalities of the application in section \ref{sec:functionality_testing}. In section \ref{sec:ropsten_tesnet}, we deploy the system prototype to the Ropsten testnet for testing on a real-world blockchain. Finally, the gas used for the core functionalities of the application will be outlined in section \ref{sec:gas}.
+
+\section{Functionality Testing} \label{sec:functionality_testing}
+
+The core functionalities of our prototype decentralized index fund application for passive asset management are assured to function properly by a set of unit tests. To this end, we set up a testing environment with a local blockchain and deploy all the smart contracts to it. Then, we write a the unit tests to validate the proper operation of the main functionalities such as the handling the buying and selling of DFAM tokens, price calculation, portfolio rebalancing and portfolio update. 
+
+\subsection{Libraries and Tools for Local Testing Environment}
+
+Similar to the off-chain code of the prototype for the oracle node describe in section \ref{subsec:oracle_node}, the tests will also be executed in Node.js v14 run-time environment . As such, the two main programming languages used throughout the prototype from implementation to testing are Solidity for smart contract development and JavaScript for off-chain code and testing. With JavaScript being the language of choice, the particular tools and libraries used in the testing environment are:
+
+\begin{itemize}
+    \item \textbf{ganache-cli v6.12.2} --- This library is employed to run a local blockchain ledger on the command line interface. By default, there are ten EOAs created with a balance of 100 ETH each. However, as the goal is to test an index fund and its interaction with a DEX, the sum of ETH and tokens circulated around the application should be somewhat realistic and thus, we set the default balance to 10,000 ETH for each of those EOA.
+    
+    \item \textbf{solc v0.8.0} --- All the smart contracts will be developed in the Solidity language version 0.8.0 and therefore, we use the solc library of the same version to compile  them to EVM bytecode.
+    
+    \item \textbf{web3.js v1.3.5} --- We use web3.js as the libraries of choice for all the interactions between the EOAs and the on-chain smart contracts. That means, every transactions and function calls to the smart contracts from the off-chain world will be handled using web3 including their deployments.
+    
+    \item \textbf{mocha v8.4.0} --- Mocha is an extensive and well-known test framework in JavaScript with many features supporting unit-testing. Thus, we will write all the unit tests for the prototype and execute them using this framework.
+    
+\end{itemize}
+
+\subsection{Deployment of Smart Contract Ecosystem}
+
+With respect to the smart contract ecosystem on the blockchain, we first deploy all the auxiliary smart contracts including the Uniswap factory and Uniswap router as well as all the ERC20-compliant token contracts that can be the candidate component tokens for the portfolio. Then, the provision of liquidity to all the relevant Uniswap pools will occur and thereby, creating the set of relevant liquidity pool contracts. The \texttt{Oracle} contracts also needs to be deployed prior to the contract \texttt{IndexFund} since the addresses of \texttt{Oracle} and the Uniswap router are required at the construction time of the \texttt{IndexFund} contract, while the \texttt{DFAM} contract will be deployed and managed by \texttt{IndexFund}.
+
+\subsubsection{Setup of Auxiliary Smart Contracts}
+
+In this test scenario, we choose the particular portfolio category of "Decentralized Lending, Saving and Asset Management" from the ITC and retrieve the data of all tokens belonging to that category from the ITSA's API using the RESTful GET request \url{api.itsa.global/v1/search-tokens/itc\_tts\_v100=TTS42ET01\&itc\_ein\_v100=EIN06DF02\&rows=99999}. In this request, we query the \texttt{search-tokens} endpoint of the API with two filters applied on the ITC codes of the returned tokens. According the ITC framework documentation \cite{itcDocs}, the first filter \texttt{itc\_tts\_v100=TTS42ET01} indicates that the resulting tokens should be on the Ethereum blockchain and follow the ERC20 standard. Furthermore, with the filter \texttt{itc\_ein\_v100=EIN06DF02}, we require that the tokens should belong to the class "Decentralized Lending, Saving and Asset Management" of the ITC. Note that the final filter \texttt{rows=99999} at the end of the query URL merely set the number of token data entries returned from the API to be at most 99,999. This is due to the current default pagination behavior of the API to return only 20 entries per page if the \texttt{rows} filter is not set. As a result, the ITSA's API returns \textit{eight} tokens fulfilling the two ITC filters and they are: Aave (AAVE), Compound (COMP), bZx Protocol (BZRX), Celsius (CEL), DFI.Money (YFII), Maker (MKR), Rhino Fund (ENZF) and yearn.finance (YFI). We store the data of these tokens as test fixtures in a JSON file for consistent test results without depending on the API in the future. From this point onward, we will refer to these eight tokens as the \textit{eight lending tokens}.
+
+All of the eight lending tokens need to be deployed on the local blockchain during the setup of the local testing environment so that the swapping between those tokens and WETH performed on Uniswap during the investments and redemption of DFAM tokens can happen. Instead of copying the real code of the lending tokens from a public source such as \url{etherscan.io}, then compile and deploy them on the local blockchain, we deploy eight bare ERC20 smart contracts with the respective names and symbols of the tokens. This approach significantly simplifies the deployment of the testing environment without any impact on the test scenario since the inner working of the lending tokens are not relevant for the functionalities of our system, and only their ERC20 functions are necessary for the interactions with them as well as for the creations of the corresponding liquidity pool contracts by Uniswap. One change we made in the constructor of the eight lending token contracts is the minting of $9 \times 10^{24}$ token units to the deploying account, which is the first default EOA that ganache-cli provides, so as to obtain the necessary liquidity for the provision to the Uniswap pools afterwards. It should be noted that we use \textit{the first EOA} provided by ganache-cli to deploy \textit{all} the contracts in the testing environment and also to supply to the Uniswap liquidity pools with token reserves. As such, this EOA will as well be the administrator of the \texttt{IndexFund} contract and the owner of \texttt{Oracle}. For this reason, we will refer to this account as the \texttt{admin} account. 
+
+After the deployment of lending token contracts is accomplished, the Uniswap factory and router contracts are deployed on the local blockchain. It is not necessary to deploy the Uniswap pool (or pair) contracts explicitly because the Uniswap factory contract will automatically deploy one for a pair of tokens when the first request for liquidity  provision to a pool of that pair arrives at the Uniswap router, even though such a pool does not already exist yet. Through the Uniswap router contract, the \texttt{admin} account can deposit funds of the lending tokens minted for it earlier when deploying the smart contract of the eight lending tokens. Importantly, we do not provide liquidity for the Rhino Fund token and therefore, there is no WETH/ENZF liquidity pool in our testing setup. The reason for this behavior is to simulate the fact that not all the ERC20 tokens returned from the ITSA's API have liquidity pool with WETH in reality, thus, the portfolio selection procedure executed by the oracle node should be tested for the exclusion of such tokens from the portfolio. In the end, there will be seven liquidity pools automatically created for swapping between WETH and lending tokens. Each of these pools is seeded with 150 ETH and a respective amount of tokens based on the current off-chain prices on Coingecko. For instance, at the current price on Coingecko, 1 ETH can be exchanged for 6.3 COMP, therefore, our WETH/COMP pool will have the reserves of 150 ETH and 945 COMP.
+
+\subsubsection{Setup of the Core Smart Contracts}
+
+At this point, all the auxiliary smart contracts on the local blockchain are basically ready for interactions with the core smart contracts of the prototypes. The next smart contract in the deployment order is the \texttt{Oracle} contract, which is deployed with an empty constructor and the \texttt{admin} account deploying it will become the owner of the contract. The address of \texttt{IndexFund} stored in \texttt{Oracle} will however be set by \texttt{admin} after its deployment.  
+
+In practice, a real portfolio can contain hundreds of individual assets with examples including the S\&P 500 and the NASDAQ. However, for the testing purpose, the size of our token portfolio is rather small with \textit{five} tokens, which we believe is decently sufficient to test the core functionalities of this prototype and also due to the number of tokens returned from the ITSA's API for the particular category "Decentralized Lending, Saving and Asset Management". The five lending tokens selected as the initial portfolio for \texttt{IndexFund} passed in its constructor in form a string array are \texttt{["AAVE", "COMP", "BZRX", "CEL", "YFII"]}. During its construction time, \texttt{IndexFund} also creates and becomes the owner of the \texttt{DFAM} contract, thereby, deploying the last smart contract in our testing setup.
+
+\subsection{Test Cases} \label{subsec:testcase}
+
+With the smart contract ecosystem in place, we proceed to write 17 test cases to cover the main functionalities of the system prototype including the buying and selling of DFAM tokens, the calculation of DFAM price as well as the update and rebalancing of the portfolio. The off-chain code of the oracle node is also tested with its invocation during the tests cases for the portfolio update process. It is important to note that due to the setup of the testing environment including smart contract deployments and liquidity provision is an extensive process, we decided not to separate the tests, i.e. not to reset the environment before executing each of them. Instead, we build the subsequent tests also on the the results of the earlier ones throughout one single environment. In this manner, not only does this remove the unnecessary restarting of the lengthy environment setup, but also provide an integration test for the whole system. In fact, we found that the interactions between smart contracts should not be tested separately, since the successive interactions should be based on the Ethereum's world state of the preceding ones. An example for this in this particular case is that the test for the selling of DFAM tokens back to \texttt{IndexFund} requires that the seller has purchased some DFAM tokens earlier, therefore, the functionality of buying DFAM tokens should work as expected and be successfully executed before that test can run.
+
+Besides the \texttt{admin} account mentioned earlier, we use other accounts called \texttt{investor} and \texttt{investor2} to simulate the interactions of real-world investors with the \texttt{IndexFund} contract for buying and selling DFAM tokens.  Also, in order to compare the actual results with the expected ones, we track the relevant entities with their respective \textit{state} defined as following within the scope the entire test set.
+\begin{itemize}
+    \item State of the \texttt{IndexFund} contract: the ETH balance, the DFAM token balance, the symbols of component tokens in the portfolio, balances of all component tokens.
+    
+    \item State of the \texttt{DFAM} contract: the total supply of DFAM tokens.
+    
+    \item State of the investor accounts: the ETH balance, the DFAM token balance.
+\end{itemize}
+
+Furthermore, we also prepare some helper functions to snapshot these states before and after certain on-chain interactions in order to inspect and validate the state changes in some particular test cases. With all of the preparation work for the test settings described above, we summarizes all of our test cases with their descriptions and execution logic as follows. 
+
+
+\begin{description}
+    \item[Test Case 1] --- Validating the deployment and the initial state of the \texttt{IndexFund}, \texttt{DFAM} \textbf{and} \texttt{Oracle} smart contracts
+
+
+    \item[Test Case 2] --- Provisioning liquidity into the pools of WETH and the lending tokens with the predefined exchange rates and asserting the correct reserves of the pools
+
+        
+    \item[Test Case 3] --- Checking that the portfolio is correctly initialized in contract \texttt{IndexFund} with the correct token symbols and token addresses as well as their order in the respective arrays.
+
+\end{description}
+
+\begin{description}
+    \item[Test Case 4] --- Testing that the nominal price is used when the total supply of DFAM tokens is 0 and the correctness of the price calculation according to formula in Equation \ref{eq:bootstrap_calc}
+
+    \item[Test Case 5] --- Assuring that it is not possible to purchase DFAM tokens at nominal price with more than 0.01 ETH.
+        
+    \item[Test Case 6] --- Buying some DFAM tokens at nominal price with 0.01 ETH without front-running prevention, i.e. without specifying the minimum amounts of component tokens that \texttt{IndexFund} should receive from Uniswap during the purchase.
+        
+    \item[Test Case 7] --- With some DFAM tokens brought into circulation in the last test case, validating that the DFAM price is now calculated using the formula in Equation \ref{eq:price_calc} and whether the price calculation is correct.
+    
+    \item[Test Case 8] --- Sending 50 ETH to \texttt{IndexFund} to purchase DFAM tokens at the regular price with front-running prevention and validating that the tracked states are updated as expected.
+    
+    \item[Test Case 9] --- Ensuring that the execution of the redemption of DFAM token investments fails and the transaction is reverted if the shareholder did not approve enough DFAM tokens to \texttt{IndexFund} in advance.
+    
+    \item[Test Case 10] --- Approving all the  DFAM tokens that the \texttt{investor} account purchased in Test Case 6 and 8 with the total amount of 50.01 ETH, then returning all of those DFAM tokens to \texttt{IndexFund} with the \texttt{sell} function and thereby, withdrawing all the investments from the fund. The tracked states of the smart contracts and account \texttt{investor} should be correctly changed, especially the total supply should be reset to zero.
+    
+    \item[Test Case 11] --- Performing another two consecutive purchases with 0.01 ETH at nominal price and 250 ETH with regular price to bring certain amount of DFAM tokens into circulation for testing the rebalancing of portfolio. Then, announcing the portfolio rebalancing, thereby, and asserting that the lock time of function \texttt{rebalance} in contract \texttt{IndexFund} will be due in two days, i.e. in 172,800 seconds with respect to block time.
+    
+    \item[Test Case 12] --- Confirming that an early invocation of function \texttt{rebalance} by the \texttt{admin} account will fail because the function is still time-locked.
+    
+    \item[Test Case 13] --- Advancing the current block time of Ganache's ledger to the next two days, then execute the portfolio rebalancing and ensure that the portfolio is rebalanced correctly with the sum of every component token having approximately the same ETH value.
+    
+    \item[Test Case 14] --- Increasing the price of MKR and YFI tokens in their liquidity pools by swapping for some amount of them using, e.g., 400 ETH each, so that these two tokens are selected as replacements for two other tokens (AAVE and COMP in this case) of the current portfolio when the update process is initiated. Then, validating that the \texttt{Oracle} contract have stored the correct update date in its state variables.
+    
+    \item[Test Case 15] --- Verifying that the lock time of function \texttt{updatePortfolio} in the \texttt{IndexFund} contract is two days
+    
+    \item[Test Case 16] --- Ensuring any transactions invoking the \texttt{updatePortfolio} function from \texttt{admin} or from \texttt{Oracle} before the lock-time completely elapses will be reverted.
+    
+    \item[Test Case 17] --- Winding the global block time once more time to the next two day, i.e. four days ahead from the real-world time, and effectively executing the update portfolio process through the \texttt{Oracle} contract with a transaction sent from the \texttt{admin} account. Then, asserting that the portfolio is updated with the new portfolio in place of the one and \texttt{IndexFund} now owns funds of the new tokens (MRK and YFI) instead of the replaced ones (AAVE and COMP).
+    
+\end{description}
+
+
+
+
+\section{Deployment on the Ropsten Testnet} \label{sec:ropsten_tesnet}
+
+For the purpose of showcasing the prototype on a real-world Ethereum blockchain, we also deploy the smart contracts on the Ropsten testnet and use Metamask wallet as the Ethereum client. The reason for selecting Ropsten instead of other testnets is the ease of acquiring a reasonable amount of ETH from the faucet at \url{faucet.dimensions.network} with five ETH for every day, while the amount of ETH that can be received from the common faucets on other testnets such as Kovan is rather limited with merely a fraction of one ETH for every request. For the compilation and deployments of smart contract in this real-world setting, we utilize Remix IDE , which is a well-known online Solidity IDE that can be injected with web3 from Metamask to allow interactions with smart contracts on the real-world Ethereum networks in a conveninent manner.
+
+On the Ropsten testnet, Uniswap already provides smart contracts for their factory and router, thus, we can omit the deployments of Uniswap's contracts in this setting. Howeverm even though there are existing smart contracts of the eight lending tokens deployed by the community on Ropsten, not all of them already have Uniswap liquidity pools with WETH. Furthermore, the finding of sufficient token funds for the liquidity provision of those tokens will also complicates the process in addition to the effort for understanding of their inner working. As such, we simplify the liquidity provision step by deploying our own eight lending tokens on Ropsten and mint to our deploying account a decent amount of these tokens at the contract creation time. Nonetheless, instead of using the ERC20 mock contracts for the lending tokens as in the local testing environment, we effectively use the real smart contract scripts that are deployed on the Ethereum Mainnet and can be acquired from \url{etherscan.io} to make this setting somewhat more realistic with the only change being the granting of certain token amount to the contract deployer in their constructor. The only lending token contract that we mock with the use of a bare ERC20 contract of OpenZeppelin is the RhnoFund token (ENZF). This is due to the complexity of its contract code (on \url{etherscan.io} at address \texttt{0x24f3b37934d1ab26b7bda7f86781c90949ae3a79} ) with 138 separate Solidity files. Furthermore, as in our local test setting, the ENZF token will be excluded from the portfolio selection process due its lack of Uniswap liquidity pool.
+
+During the deployment of the \texttt{IndexFund} contract, we encountered the issue of too large contract size with respect to the EIP-170 \cite{eip170}. While the \texttt{IndexFund} contract with the size of more than 24,576 bytes can be deployed locally on Ganache's blockchain, this is no longer possible on Ropsten or on any other testnets or the Mainnet. To address this issue, we have attempted many approaches including abbreviating local variable names, enabling the compilation optimizer, separating the view function \texttt{getIndexPrice} to a library and refactoring the repeated code snippets to internal functions. Among these four approaches, only the last three ones are effective and allow the \texttt{IndexFund} contract to be deployed successfully onto Ropsten, however, the approaches with the code optimizer and the separate library impose certain other limitations. While the code optimization by the compiler requires specifying the maximum number of times each opcode will be executed across the lifetime of the contract \cite{soloptimizer}, introducing a separate library, on the other hand, will not only require more external calls during the execution of the \texttt{getIndexPrice} function, but also make the contract code slightly more complicated and obscured to the code inspectors. As a result, we proceeded with the refactoring of repeated code to be able to comply with the EIP-170. After reviewing the code of contract \texttt{IndexFund} carefully, we found that the code responsible for looping through all individual token in the portfolio and swapping from ETH to tokens or vice versa in the \texttt{buy} and \texttt{sell} functions, respectively,  is more or less duplicated in the \texttt{rebalance} function. As such, these code snippets are refactored to the two respective internal functions \texttt{\_swapExactETHForTokens} and \texttt{\_swapExactTokensForETH} and thanks to the test set described in section \ref{subsec:testcase}, the refactoring could be accomplished with confidence that the code logic is not changed during the process. It should also be noted that since it is not possible to advance the block time to a later point in the future as with Ganache, for the purpose of testing the portfolio update as well as the portfolio rebalancing functionalities, we also deploy another \texttt{IndexFund} contract with five-minute lock time for these functions.
+The addresses of the our smart contracts on the Ropsten testnet are listed in Table \ref{tab:testnet} with their source code can be found at \url{https://github.com/anhmt90/thesis-index-token/tree/main/contracts} for the interactions with them through Remix IDE. Interested readers are welcome to interact with the \texttt{IndexFund} contract to test the functionalities of our decentralized application.
+
+
+\begin{longtable}{p{.35\textwidth}p{.55\textwidth}}
+% \begin{tabular}{p{.35\textwidth}p{.55\textwidth}}
+        \toprule 
+        \textbf{Contract Name} & \textbf{Contract Address}\\
+        \midrule
+        Uniswap Factory & \texttt{0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f} \\
+        Uniswap Router & \texttt{0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D} \\
+        \midrule
+        Wrapped Ether (WETH) & \texttt{0xc778417E063141139Fce010982780140Aa0cD5Ab} \\
+        Aave (AAVE) & \texttt{0x88Cfee20d568f938dFB56A76ec4fAD8C714B5116} \\
+        Compound (COMP) & \texttt{0xF0cb8f48afA40fD4da523BcB8c5ed9e459608911} \\
+        Celsius (CEL) & \texttt{0xB2ECd79d29fb19Cc396BAFed592eEb338De4EDb6} \\
+        DFI.Money (YFII) & \texttt{0x31f7e35c67545b44Ae8A922369ce805e7e012686} \\
+        Maker (MKR) & \texttt{0xd4e359a08Bc4079B3c908b5B58162d5b40f99c08} \\
+        yearn.finance (YFI) & \texttt{0x67C2b5bfb4E9850Fcf8977b321BA585DB8Ab73eb} \\
+        (Mock) Rhino Fund (ENZF) & \texttt{0xD7A3aAbefE07126DbC3fc4935EE14841B25B2DA3} \\
+        \midrule
+        IndexFund (two-day lock) & \texttt{0xc3A65948e7C690Fc617831442966e063618e38E1} \\
+        DFAM (two-day lock) & \texttt{0x1AE218845276edC8cF78AB202987505C02fb541D} \\
+        Oracle (two-day lock) & \texttt{0xE1EEd86E83Ec632C40001F59145e364D0c5Ef7d6} \\
+        \midrule
+        IndexFund (five-minute lock) & 
+        \texttt{0xBdcE924822042db26Bff8Fe94816821324476F00} \\
+        % 0x050503600d86546450C7f2BF3F5fb9f5Fa7597b2 \\
+        DFAM (five-minute lock) & \texttt{0x0D4E4AdE3B083Ee426Dad9857120c4Ac7127E227} \\
+        Oracle (five-minute lock) & \texttt{0xc3748dF9F1685470735789A1729c7A7F2A10A03B} \\
+        \bottomrule
+        \caption{\label{tab:testnet} Addresses of the smart contract ecosystem on the Ropsten testnet}
+    % \end{tabular}
+\end{longtable}
+
+
+\section{Gas Measurement} \label{sec:gas}
+
+In order to give an overview of the average transaction fees that the stakeholders must pay for the interactions with our smart contracts, especially important for investors and shareholders due to their recurrent interactions with the \texttt{IndexFund} contract, we record the amounts of gas used for every functionality on the local blockchain and summarize them into Table \ref{tab:gas}.
+
+\begin{longtable}{p{.35\textwidth}p{.35\textwidth}p{.2\textwidth}}
+    % \begin{tabular}{p{.3\textwidth}p{.3\textwidth}p{.2\textwidth}}
+        \toprule 
+        \textbf{Operation} & \textbf{Function} & \textbf{Gas Used}\\
+        \midrule
+        Deploy \texttt{IndexFund} & \texttt{IndexFund.constructor()} & 7,283,095 \\
+        Purchase DFAM & \texttt{IndexFund.buy()} & 723,276 \\
+        Sell back DFAM & \texttt{IndexFund.sell()} & 747,629 \\
+        Deploy \texttt{Oracle} & \texttt{Oracle.constructor()} & 2,400,781 \\
+        Announce rebalancing & \texttt{Oracle.announceRebalancing()} & 51,256 \\
+        Commit rebalancing & \texttt{Oracle.commitRebalancing()} & 785,669 \\
+        Announce Update & \texttt{Oracle.announceRebalancing()} & 453,331 \\
+        Commit Update & \texttt{Oracle.commitRebalancing()} & 566,332 \\
+        \bottomrule
+        \caption{\label{tab:gas} Gas measurement of the core functions of the prototype}
+        % \end{tabular}
+\end{longtable}
+
+
+
+% \section{Case Study of Existing Solutions}
+

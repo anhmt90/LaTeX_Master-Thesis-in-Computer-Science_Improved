@@ -1,0 +1,41 @@
+\chapter{\abstractname}
+
+%TODO: Abstract
+
+
+
+With the growth of cryptocurrencies and crypto-assets in the recent years, investors now have a new investment space to pursue profits. A considerable part of this picture is attributed to the Ethereum blockchain with the ability to run Turing-complete scripts called smart contracts and allow everyone to create their own crypto-tokens serving myriad purposes, thereby, also opening investment opportunities for interested parties. While investing in individual tokens is easy at first, investors will be, however, less exposed to the market and actively managing various invested tokens at the time is not possible for anyone, especially for new investors, who do not have the expertise in Decentralized Finance (DeFi) market and the technical knowledge required to understand the smart contracts and the protocols underlying the tokens. For such reasons, we suggest the development of an index token acting as a portfolio comprising many different underlying component tokens. By investing in an index token, investors effectively owning the proportional amounts of the individual components constituting the index token, thereby, achieving diversified market exposure.
+
+For our token prototype, we name the token as DFAM, which stand for DeFi Asset Management, and require all the components to belong to a certain token category such as lending and saving tokens, or stablecoin ones. For the data of token category, we resort to the ITSA's ITC framework.
+
+Furthermore, we also design and implement, as a proof-of-concept, a decentralized index fund that can function by itself on the Ethereum blockchain to serve investors for activities around their investments. To enable this automation, the index fund relies on a decentralized exchange (DEX) for the source of acquiring the underlying tokens when receiving ETH from investors' investment capital. Uniswap is our DEX of choice for this prototype.
+
+Our prototype has proved to be working on a real-life blockchain on the Ropsten testnet with the most basic functionalities that a conventional index fund can offer such as handling investment, redemption, portfolio update and portfolio rebalancing. However, there is still much room for further development. 
+
+
+
+
+
+
+
+
+\makeatletter
+\ifthenelse{\pdf@strcmp{\languagename}{english}=0}
+{\renewcommand{\abstractname}{Kurzfassung}}
+{\renewcommand{\abstractname}{Abstract}}
+\makeatother
+
+% \chapter{\abstractname}
+
+%TODO: Abstract in other language
+% \begin{otherlanguage}{ngerman} % TODO: select other language, either ngerman or english !
+
+% \end{otherlanguage}
+
+
+% Undo the name switch
+\makeatletter
+\ifthenelse{\pdf@strcmp{\languagename}{english}=0}
+{\renewcommand{\abstractname}{Abstract}}
+% {\renewcommand{\abstractname}{Kurzfassung}}
+\makeatother
